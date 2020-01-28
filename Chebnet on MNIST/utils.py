@@ -1,5 +1,6 @@
 import os
 import sys
+import torch
 
 def check_mnist_dataset_exists(path_data='./'):
     flag_train_data = os.path.isfile(path_data + 'mnist/train_data.pt')
