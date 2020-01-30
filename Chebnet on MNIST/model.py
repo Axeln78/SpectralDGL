@@ -7,6 +7,21 @@ import dgl
 import time 
 
 from utils import chebyshev,rescale_L
+
+def set_device():
+    if torch.cuda.is_available():
+        print('cuda available')
+        dtypeFloat = torch.cuda.FloatTensor
+        dtypeLong = torch.cuda.LongTensor
+        torch.cuda.manual_seed(1)
+        device=torch.device('cuda:0')
+    else:
+        print('cuda not available')
+        dtypeFloat = torch.FloatTensor
+        dtypeLong = torch.LongTensor
+        torch.manual_seed(1)
+        device=torch.device('cpu')
+    return device
     
 # Sends a message of node feature h.
 msg = fn.copy_src(src='h', out='m')
@@ -42,6 +57,7 @@ class Chebyconv(nn.Module):
         # Convlayer
         self.apply_mod = NodeApplyModule(
             in_feats*k, out_feats, activation=F.relu)
+        self.device = set_device()
 
         ##
         # NEED TO MAKE A PARAMETER INITIALIZER /!\
@@ -49,7 +65,7 @@ class Chebyconv(nn.Module):
 
     def forward(self, g, feature, L):
         V, featmaps = feature.size()
-        Xt = torch.Tensor([]).to(torch.device('cuda:0'))
+        Xt = torch.Tensor([]).to(self.device)
         
         for fmap in range(featmaps):
             #print('Xt',Xt,'L',self.L,'fmap',feature[:, fmap].view(-1, 1))
@@ -76,7 +92,7 @@ class Classifier(nn.Module):
             nn.ReLU(inplace=True),
             #nn.Dropout(), ## Add dropout when there will be enough features
             nn.Linear(50, n_classes)
-        )
+        ) 
 
     def forward(self, g, L):
         h = g.ndata.pop('h').view(-1, 1)
