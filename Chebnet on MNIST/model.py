@@ -40,6 +40,7 @@ class NodeApplyModule(nn.Module):
         super(NodeApplyModule, self).__init__()
         self.linear = nn.Linear(in_feats, out_feats, bias)
         self.activation = activation
+        torch.nn.init.xavier_uniform(self.linear.weight, gain=nn.init.calculate_gain('relu'))
 
     def forward(self, node):
         h = self.linear(node.data['h'])
@@ -92,7 +93,10 @@ class Classifier(nn.Module):
             nn.ReLU(inplace=True),
             #nn.Dropout(), ## Add dropout when there will be enough features
             nn.Linear(50, n_classes)
-        ) 
+        )
+         for m in self.classify:
+            if isinstance(m, nn.Linear):
+                m.weight.data = nn.init.xavier_uniform(m.weight.data, gain=nn.init.calculate_gain('relu')) 
 
     def forward(self, g, L):
         h = g.ndata.pop('h').view(-1, 1)
