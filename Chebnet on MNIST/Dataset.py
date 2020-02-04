@@ -33,7 +33,7 @@ class MNISTDataset(object):
         self.graph = g
 
     def __getitem__(self, idx):
-        """Get the i^th sample.
+        """Get the i^th sample, get's one sample of data.
 
         Paramters
         ---------
@@ -45,10 +45,11 @@ class MNISTDataset(object):
         (dgl.DGLGraph, int)
             The graph with the signal on "['h']" channel and its label.
         """
-        oG = self.graph
-        oG.ndata['h'] = self.data[idx]
-
-        return oG, self.labels[idx]
+        if torch.is_tensor(idx):
+            idx = idx.tolist()
+            print('ERROR IN DATALOADER /!\')
+                  
+        return self.graph, self.labels[idx] , self.data[idx]
 
     @property
     def num_classes(self):
