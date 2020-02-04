@@ -5,17 +5,23 @@ import torch.nn.functional as F
 import dgl
 import time
 
-from utils import chebyshev, rescale_L, set_device
+from utils import chebyshev, set_device
+from dgl.batched_graph import BatchedDGLGraph
+
+'''
+CODE not used for the moment
+--------
 
 # Sends a message of node feature h.
 msg = fn.copy_src(src='h', out='m')
-
 
 def reduce(nodes):
     """Take a sum over all neighbor node features hu and use it to
     overwrite the original node feature."""
     accum = torch.sum(nodes.mailbox['m'], 1)
     return {'h': accum}
+    
+'''
 
 
 class NodeApplyModule(nn.Module):
@@ -58,8 +64,9 @@ class Chebyconv(nn.Module):
         g.apply_nodes(func=self.apply_mod)
         return g.ndata.pop('h')
 
+
 class Classifier(nn.Module):
-    def __init__(self, in_dim, fc1,fc2, n_classifier, n_classes, k):
+    def __init__(self, in_dim, fc1, fc2, n_classifier, n_classes, k):
         super(Classifier, self).__init__()
         self.layers = nn.ModuleList([
             Chebyconv(in_dim, fc1, k),
@@ -73,11 +80,12 @@ class Classifier(nn.Module):
         )
 
     def forward(self, g, L):
-        B = g.batch_size
+        batch_size = g.batch_size if isinstance(g, BatchedDGLGraph) else 1
+
         h = g.ndata.pop('h').view(-1, 1)
-        #for conv in self.layers:
-            #h = conv(g, h, L)
+        # for conv in self.layers:
+        #h = conv(g, h, L)
         #g.ndata['h'] = h
         #hg = dgl.mean_nodes(g, 'h')
-        #print('h',h,h.size())
-        return self.classify(h.view(B, -1))
+        # print('h',h,h.size())
+        return self.classify(h.view(batch_size, -1))
