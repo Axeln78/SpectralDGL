@@ -2,7 +2,6 @@ import os
 import sys
 import torch
 from scipy import sparse
-#from dgl.batched_graph import BatchedDGLGraph, unbatch
 import dgl
 import torch.sparse
 import numpy as np
@@ -27,7 +26,6 @@ def chebyshev(L, X, K):
     x0 = X
     x = x0.unsqueeze(0)
     if K > 1:
-        # print('L',L,'x0',x0)
         x1 = torch.sparse.mm(L, x0)              # V x Fin*B
         x = torch.cat((x, x1.unsqueeze(0)), 0)  # 2 x V x Fin*B
     for k in range(2, K):
