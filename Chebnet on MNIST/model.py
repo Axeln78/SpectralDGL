@@ -41,6 +41,14 @@ class NodeApplyModule(nn.Module):
 class Chebyconv(nn.Module):
     def __init__(self, in_feats, out_feats, k, bias=True):
         super(Chebyconv, self).__init__()
+        '''
+        Parameters:
+        -----------
+        in_feats: number of input features
+        out_feats: number of outpout features
+        k: order of chebynome
+        '''
+        
         # Parameters
         self._in_feats = in_feats
         self._out_feats = out_feats
@@ -50,42 +58,75 @@ class Chebyconv(nn.Module):
             in_feats*k, out_feats, activation=F.relu)
         self.device = set_device()
 
-    def forward(self, g, feature, L):
+    def forward(self, g, feature, L): # MAYBE A PROBLEM HERE WITH the fiddling of indexes.
         V, featmaps = feature.size()
         Xt = torch.Tensor([]).to(self.device)
-
+        
         for fmap in range(featmaps):
             Xt = torch.cat(
-                (Xt, chebyshev(L, feature[:, fmap].view(-1, 1), self._k)), 0)
-
-        g.ndata['h'] = Xt.view(V, -1)
-        # print('DATA:',g.ndata['h'],g.ndata['h'].size())
-        #g.update_all(msg, reduce)
+                (Xt, chebyshev(L, feature[:, fmap].view(-1, 1), self._k)), 0) 
+        
+        g.ndata['h'] = Xt.squeeze().t() 
         g.apply_nodes(func=self.apply_mod)
         return g.ndata.pop('h')
 
 
 class Classifier(nn.Module):
+    
     def __init__(self, in_dim, fc1, fc2, n_classifier, n_classes, k):
         super(Classifier, self).__init__()
+        '''
+        Parameters:
+        -----------
+        in_dim: Number of input features
+        fc1: number of output from the first convolutional layer
+        fc2: number of outputs from the second conv layer
+        n_classifier number of hidden layers in the classifier module
+        n_classes: number of classes for the classifier
+        k: number of Chebynomes to compute
+
+        '''
+
         self.layers = nn.ModuleList([
             Chebyconv(in_dim, fc1, k),
             Chebyconv(fc1, fc2, k)])
 
         self.classify = nn.Sequential(
-            nn.Linear(784, n_classifier),
+            nn.Linear(fc2*784, n_classifier),
             nn.ReLU(inplace=True),
-            # nn.Dropout(), ## Add dropout later
+            nn.Dropout(), ## Add dropout later
             nn.Linear(n_classifier, n_classes)
         )
 
-    def forward(self, g, L):
+    def forward(self, g, signal, L):
+        '''
+        Parameters:
+        -----------
+        g: graph
+        signal : signal over graph
+        L : Laplacian matrix
+        '''
+        
         batch_size = g.batch_size if isinstance(g, BatchedDGLGraph) else 1
-
-        h = g.ndata.pop('h').view(-1, 1)
-        # for conv in self.layers:
-        #h = conv(g, h, L)
+        h = signal.view(-1,1)  #[B*V*h,1] = [V2*h,1]
+        for conv in self.layers:
+            h = conv(g, h, L)
         #g.ndata['h'] = h
-        #hg = dgl.mean_nodes(g, 'h')
-        # print('h',h,h.size())
-        return self.classify(h.view(batch_size, -1))
+        #hg = dgl.sum_nodes(g, 'h') # SUM OVER NODES?
+        return self.classify(h.view(batch_size, -1)) # {B, V*F} correctly?
+
+    
+class SanityCheck(nn.Module):
+    def __init__(self, in_dim, n_classifier, n_classes):
+        super(TestModule, self).__init__()
+        self.fc1 = nn.Linear(in_dim, in_dim)
+        self.fc2 = nn.Linear(in_dim, n_classifier)
+        self.fc3 = nn.Linear(n_classifier, n_classes)
+        
+    def forward(self, g, s, L):
+        batch_size = g.batch_size if isinstance(g, BatchedDGLGraph) else 1
+        x = F.relu(self.fc1(s.view(batch_size,-1)))
+        x = F.relu(self.fc2(x)) 
+        x = self.fc3(x) 
+        return x
+

@@ -47,7 +47,7 @@ class MNISTDataset(object):
         """
         if torch.is_tensor(idx):
             idx = idx.tolist()
-            print('ERROR IN DATALOADER /!\')
+            print('ERROR IN DATALOADER /!\ ')
                   
         return self.graph, self.labels[idx] , self.data[idx]
 
