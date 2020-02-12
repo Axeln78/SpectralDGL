@@ -3,7 +3,7 @@ import networkx as nx
 import os
 import torch
 
-from graphs import regular_2D_lattice,regular_2D_lattice_8_neighbors
+from graphs import regular_2D_lattice,regular_2D_lattice_8_neighbors,random_edge_suppression
 
 
 class MNISTDataset(object):
@@ -33,7 +33,8 @@ class MNISTDataset(object):
         def load_graph(lattice_type):
             switcher={
                 0: regular_2D_lattice(lattice_size),
-                1: regular_2D_lattice_8_neighbors(lattice_size)
+                1: regular_2D_lattice_8_neighbors(lattice_size),
+                2: random_edge_suppression(lattice_size,lattice_size)
             }
             return switcher.get(lattice_type,"Invalid graph type")
         

@@ -6,6 +6,7 @@ This file is a regroupment of functions that are supposed to create different la
 # Libraries
 import dgl
 import networkx as nx
+import random
 
 # --------- Lattices & regular tiling --------- #
 
@@ -40,6 +41,17 @@ def regular_2D_lattice_8_neighbors(size):
 def subgraph(g,parameter):
     
     return g
+
+def random_edge_suppression(size, k):
+    '''
+    Takes a DGLGraph and K a number of edges to remove
+    '''
+    G = dgl.DGLGraph()
+    g = nx.grid_2d_graph(size, size)
+    to_remove=random.sample(g.edges(),k)
+    g.remove_edges_from(to_remove)
+    G.from_networkx(g)
+    return G
 
 def contracted(g,contraction_list):
     '''https://networkx.github.io/documentation/networkx-1.10/reference/generated/networkx.algorithms.minors.contracted_nodes.html#networkx.algorithms.minors.contracted_nodes
