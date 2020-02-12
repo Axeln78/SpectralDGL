@@ -3,6 +3,8 @@ import networkx as nx
 import os
 import torch
 
+from graphs import regular_2D_lattice,regular_2D_lattice_8_neighbors
+
 
 class MNISTDataset(object):
     """The dataset class.
@@ -20,17 +22,22 @@ class MNISTDataset(object):
         number of pixel on one dimention of the original image
     """
 
-    def __init__(self, data, labels, lattice_size=28):
+    def __init__(self, data, labels, lattice_type = 0, lattice_size=28):
         super(MNISTDataset, self).__init__()
         self.data = data
         self.labels = labels
 
         # Define the regular lattice graph used for ALL computation
         self.graph = []
-        g = dgl.DGLGraph()
-        g.from_networkx(
-            nx.grid_2d_graph(lattice_size, lattice_size))
-        self.graph = g
+        
+        def load_graph(lattice_type):
+            switcher={
+                0: regular_2D_lattice(lattice_size),
+                1: regular_2D_lattice_8_neighbors(lattice_size)
+            }
+            return switcher.get(lattice_type,"Invalid graph type")
+        
+        self.graph = load_graph(lattice_type)
 
     def __getitem__(self, idx):
         """Get the i^th sample, get's one sample of data.
@@ -43,7 +50,6 @@ class MNISTDataset(object):
         Returns
         -------
         (dgl.DGLGraph, int)
-            The graph with the signal on "['h']" channel and its label.
         """
         if torch.is_tensor(idx):
             idx = idx.tolist()
