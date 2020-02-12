@@ -11,12 +11,17 @@ def save_model(name, model):
     if not os.path.exists('saved_models'):
         os.makedirs('saved_models')
     torch.save(model.state_dict(), './saved_models/' + name + '.pt')
+    
+def load_model(name):
+    assert os.path.exists('saved_models'), "Directory not found!"
+    return torch.load("./saved_models/" + name + ".pt", map_location = set_device())
 
 
 def chebyshev(L, X, K):
-    """Return T_k X where T_k are the Chebyshev polynomials of order up to K.
+    """
+    Return T_k X where T_k are the Chebyshev polynomials of order up to K.
     Complexity is O(KMN).
-    -  - - - - - - - - - 
+    - --------------------------
     - Here implemented for torch
     - L should be on device!
     """
