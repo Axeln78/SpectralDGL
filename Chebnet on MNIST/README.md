@@ -1,18 +1,24 @@
-# Chebnet on MNIST
-Notebook implementation of the Chebyconv using the DGL framework.
-The net is a simple LeNet 5 with three convolution layer and two linear layers.
-The dataset is the good-old MNIST
+# Transferability of spectral Graph Neural Networks 
 
-## Files:
+This private repository regroups the efforts to be able to study the transferability of graph neural networks by learning a laplacian transformation
 
-* dataset.py - torch dataset definition
-* model.py - torch implementatio of the model
+## Python Files:
+
+* Dataset.py - torch dataset definition
+* model.py - torch implementation of the Chebnet
 * utils.py - utility functions
+* laplacian.py - Group all functions linked with laplacian calculation
+* graphs.py - Group all graph generation functions
 
-### ChebGCNs
+## Support Notebooks
+Notebooks made to visualise, measure of develop different scripts.
 
-Training notebook for the Chebnet
+* ChebGCNs - Chebnet training notebook
 
-### Visualisation Notebook
-To see the Chebynomes on graphs
+* visualisation - Look at the Chebyshev polynomials of a given graph / signal.
 ![alt text]('Chebfilters.png')
+
+* filtervisualisation - look at the learned filters of a given model. In the presented notebook a Chebnet is trained with only one conv layer and the visualisation is made on one MNIST image and one unit dirac to visualise the filter response.
+
+* laplacianprediction - look at the prediction error of a given model on different lattices / laplacians
+
