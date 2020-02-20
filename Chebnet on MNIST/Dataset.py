@@ -22,7 +22,7 @@ class MNISTDataset(object):
         number of pixel on one dimention of the original image
     """
 
-    def __init__(self, data, labels, lattice_type = 0, lattice_size=28):
+    def __init__(self, data, labels, lattice_type = 0, lattice_size=28, nb_removal=28):
         super(MNISTDataset, self).__init__()
         self.data = data
         self.labels = labels
@@ -34,7 +34,7 @@ class MNISTDataset(object):
             switcher={
                 0: regular_2D_lattice(lattice_size),
                 1: regular_2D_lattice_8_neighbors(lattice_size),
-                2: random_edge_suppression(lattice_size,lattice_size)
+                2: random_edge_suppression(lattice_size,nb_removal)
             }
             return switcher.get(lattice_type,"Invalid graph type")
         
