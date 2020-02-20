@@ -8,19 +8,24 @@ import dgl
 import networkx as nx
 import random
 
+def transform(g):
+    '''
+    takes in a nx graph and returns a dgl Graph
+    '''
+    G = dgl.DGLGraph()
+    G.from_networkx(g)
+    return G
+
 # --------- Lattices & regular tiling --------- #
 
 # 2D regular lattice, connected to 4 neighbors
 def regular_2D_lattice(size):
-    g = dgl.DGLGraph()
-    g.from_networkx(
-        nx.grid_2d_graph(size, size))
-    return g
+    g = nx.grid_2d_graph(size, size)
+    return transform(g)
 
 # 2D regular lattice, connected to 8 neighbors 
 
 def regular_2D_lattice_8_neighbors(size):
-    g = dgl.DGLGraph()
     G = nx.grid_2d_graph(size, size)
     G.add_edges_from([
     ((x, y), (x+1, y+1))
@@ -31,8 +36,7 @@ def regular_2D_lattice_8_neighbors(size):
     for x in range(size-1)
     for y in range(size-1)
     ], weight=1)
-    g.from_networkx(G)
-    return g
+    return transform(G)
     
 
 
@@ -52,6 +56,25 @@ def random_edge_suppression(size, k):
     g.remove_edges_from(to_remove)
     G.from_networkx(g)
     return G
+
+def random_geometric_graph(size,p=0.058):
+    '''
+    size: sqrt of number of nodes
+    p: max distance between two nodes to be connected
+    '''
+    g = nx.random_geometric_graph(size*size, p)
+    
+    return transform(g)
+
+def random_waxman_graph(size):
+    '''
+    size: sqrt of number of nodes
+    p: max distance between two nodes to be connected
+    '''
+    g = nx.waxman_graph(size*size, alpha = 1, beta=0.015)
+    
+    return transform(g)
+    
 
 def contracted(g,contraction_list):
     '''https://networkx.github.io/documentation/networkx-1.10/reference/generated/networkx.algorithms.minors.contracted_nodes.html#networkx.algorithms.minors.contracted_nodes
