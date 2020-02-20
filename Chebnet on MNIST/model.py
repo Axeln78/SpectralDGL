@@ -58,7 +58,7 @@ class Chebyconv(nn.Module):
             in_feats*k, out_feats, activation=F.relu)
         self.device = set_device()
 
-    def forward(self, g, feature, L): # MAYBE A PROBLEM HERE WITH the fiddling of indexes.
+    def forward(self, g, feature, L): 
         V, featmaps = feature.size()
         Xt = torch.Tensor([]).to(self.device)
         
@@ -114,6 +114,47 @@ class Classifier(nn.Module):
         #g.ndata['h'] = h
         #hg = dgl.sum_nodes(g, 'h') # SUM OVER NODES?
         return self.classify(h.view(batch_size, -1)) # {B, V*F} correctly?
+
+class SmallCheb(nn.Module):
+    
+    def __init__(self, in_dim, fc1, n_classifier, n_classes, k):
+        super(SmallCheb, self).__init__()
+        '''
+        Parameters:
+        -----------
+        in_dim: Number of input features
+        fc1: number of output from the first convolutional layer
+        n_classifier number of hidden layers in the classifier module
+        n_classes: number of classes for the classifier
+        k: number of Chebynomes to compute
+
+        '''
+
+        self.layers = nn.ModuleList([
+            Chebyconv(in_dim, fc1, k)])
+
+        self.classify = nn.Sequential(
+            nn.Linear(fc1*784, n_classifier),
+            nn.ReLU(inplace=True),
+            nn.Dropout(), ## Add dropout later
+            nn.Linear(n_classifier, n_classes)
+        )
+
+    def forward(self, g, signal, L):
+        '''
+        Parameters:
+        -----------
+        g: graph
+        signal : signal over graph
+        L : Laplacian matrix
+        '''
+        
+        batch_size = g.batch_size if isinstance(g, BatchedDGLGraph) else 1
+        h = signal.view(-1,1)  #[B*V*h,1] = [V2*h,1]
+        for conv in self.layers:
+            h = conv(g, h, L)
+        return self.classify(h.view(batch_size, -1)) # {B, V*F} correctly?
+
 
     
 class SanityCheck(nn.Module):
