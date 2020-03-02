@@ -61,7 +61,6 @@ def random_edge_suppression(size, k):
     G.from_networkx(g)
     return G
 
-
 def random_geometric_graph(size, p=0.058):
     '''
     size: sqrt of number of nodes

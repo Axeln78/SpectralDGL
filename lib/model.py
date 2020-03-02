@@ -65,7 +65,7 @@ class Chebyconv(nn.Module):
         for fmap in range(featmaps):
             Xt = torch.cat(
                 (Xt, chebyshev(L, feature[:, fmap].view(-1, 1), self._k)), 0) 
-        
+            
         g.ndata['h'] = Xt.squeeze().t() 
         g.apply_nodes(func=self.apply_mod)
         return g.ndata.pop('h')

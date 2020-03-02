@@ -6,7 +6,6 @@ import dgl
 import torch.sparse
 import numpy as np
 
-
 def save_model(name, model):
     if not os.path.exists('saved_models'):
         os.makedirs('saved_models')

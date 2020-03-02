@@ -2,6 +2,7 @@ import dgl
 import networkx as nx
 import os
 import torch
+import random 
 
 from graphs import regular_2D_lattice,regular_2D_lattice_8_neighbors,random_edge_suppression
 
@@ -26,6 +27,7 @@ class MNISTDataset(object):
         super(MNISTDataset, self).__init__()
         self.data = data
         self.labels = labels
+        self.size = lattice_size
 
         # Define the regular lattice graph used for ALL computation
         self.graph = []
@@ -120,3 +122,57 @@ def datasampler(nb_selected_train_data, nb_selected_test_data):
     test_labels = test_labels[:nb_selected_test_data]
     # print(test_labels.shape)
     return train_data, train_labels, test_data, test_labels
+
+
+class MNIST_rand(object):
+    """The dataset class.
+
+    .. note::
+        This dataset class is compatible with pytorch's :class:`Dataset` class.
+
+    Parameters
+    ----------
+    data: Torch tensor
+        Signal over the graph, here shades of grey
+    labels: int
+        handwritten digit
+    lattice_size: int
+        number of pixel on one dimention of the original image
+    """
+
+    def __init__(self, data, labels, lattice_type = 0, lattice_size=28, nb_removal=28):
+        super(MNIST_rand, self).__init__()
+        self.data = data
+        self.labels = labels
+
+        # Define the regular lattice graph used for ALL computation
+        self.graph = []
+        
+        self.size = lattice_size
+
+    def __getitem__(self, idx):
+        """Get the i^th sample, get's one sample of data.
+        """
+        
+        if torch.is_tensor(idx):
+            idx = idx.tolist()
+            print('ERROR IN DATALOADER /!\ ')
+        
+        # DEFINE RANDOM RANGE, here 30%
+        
+        removal = random.randint(0,int(self.size*self.size*0.3))
+        
+        graph = random_edge_suppression(self.size , removal)
+                  
+        return graph, self.labels[idx] , self.data[idx]
+
+    @property
+    def num_classes(self):
+        """Number of classes from 0 to 9."""
+        return 10
+
+    def __len__(self):
+        """Return the number of graphs in the dataset."""
+        return len(self.labels)
+
+
