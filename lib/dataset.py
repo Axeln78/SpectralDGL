@@ -2,9 +2,9 @@ import dgl
 import networkx as nx
 import os
 import torch
-import random 
+import random
 
-from graphs import regular_2D_lattice,regular_2D_lattice_8_neighbors,random_edge_suppression
+from graphs import regular_2D_lattice, regular_2D_lattice_8_neighbors, random_edge_suppression, random_edge_suppression_nx, regular_2D_lattice_nx
 
 
 class MNISTDataset(object):
@@ -23,7 +23,7 @@ class MNISTDataset(object):
         number of pixel on one dimention of the original image
     """
 
-    def __init__(self, data, labels, lattice_type = 0, lattice_size=28, nb_removal=28):
+    def __init__(self, data, labels, lattice_type=0, lattice_size=28, nb_removal=28):
         super(MNISTDataset, self).__init__()
         self.data = data
         self.labels = labels
@@ -31,15 +31,15 @@ class MNISTDataset(object):
 
         # Define the regular lattice graph used for ALL computation
         self.graph = []
-        
+
         def load_graph(lattice_type):
-            switcher={
+            switcher = {
                 0: regular_2D_lattice(lattice_size),
                 1: regular_2D_lattice_8_neighbors(lattice_size),
-                2: random_edge_suppression(lattice_size,nb_removal)
+                2: random_edge_suppression(lattice_size, nb_removal)
             }
-            return switcher.get(lattice_type,"Invalid graph type")
-        
+            return switcher.get(lattice_type, "Invalid graph type")
+
         self.graph = load_graph(lattice_type)
 
     def __getitem__(self, idx):
@@ -57,8 +57,8 @@ class MNISTDataset(object):
         if torch.is_tensor(idx):
             idx = idx.tolist()
             print('ERROR IN DATALOADER /!\ ')
-                  
-        return self.graph, self.labels[idx] , self.data[idx]
+
+        return self.graph, self.labels[idx], self.data[idx]
 
     @property
     def num_classes(self):
@@ -140,31 +140,33 @@ class MNIST_rand(object):
         number of pixel on one dimention of the original image
     """
 
-    def __init__(self, data, labels, lattice_type = 0, lattice_size=28, nb_removal=28):
+    def __init__(self, data, labels, lattice_type=0, lattice_size=28, nb_removal=28):
         super(MNIST_rand, self).__init__()
         self.data = data
         self.labels = labels
 
         # Define the regular lattice graph used for ALL computation
-        self.graph = []
-        
+        self.graph = regular_2D_lattice_nx(lattice_size)
+        self.n_edges = self.graph.number_of_edges()
         self.size = lattice_size
+        
 
-    def __getitem__(self, idx):
+    def __getitem__(self, idx, removal_rate):
         """Get the i^th sample, get's one sample of data.
         """
-        
+
         if torch.is_tensor(idx):
             idx = idx.tolist()
             print('ERROR IN DATALOADER /!\ ')
+
+        # DEFINE RANDOM RANGE, here 30% of about 3000 edges
         
-        # DEFINE RANDOM RANGE, here 30%
+        removal = random.randint(0, int(self.n_edges*removal_rate))
+
+        #graph = random_edge_suppression_nx(self.graph, removal) #-> BETTER PERF
+        graph = random_edge_suppression(self.size, removal)
         
-        removal = random.randint(0,int(self.size*self.size*0.3))
-        
-        graph = random_edge_suppression(self.size , removal)
-                  
-        return graph, self.labels[idx] , self.data[idx]
+        return graph, self.labels[idx], self.data[idx]
 
     @property
     def num_classes(self):
@@ -174,5 +176,3 @@ class MNIST_rand(object):
     def __len__(self):
         """Return the number of graphs in the dataset."""
         return len(self.labels)
-
-
