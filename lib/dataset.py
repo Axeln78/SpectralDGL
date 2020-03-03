@@ -140,7 +140,7 @@ class MNIST_rand(object):
         number of pixel on one dimention of the original image
     """
 
-    def __init__(self, data, labels, lattice_type=0, lattice_size=28, nb_removal=28):
+    def __init__(self, data, labels, lattice_type=0, lattice_size=28, removal_rate = 0.1):
         super(MNIST_rand, self).__init__()
         self.data = data
         self.labels = labels
@@ -149,9 +149,10 @@ class MNIST_rand(object):
         self.graph = regular_2D_lattice_nx(lattice_size)
         self.n_edges = self.graph.number_of_edges()
         self.size = lattice_size
+        self.removal = removal_rate
         
 
-    def __getitem__(self, idx, removal_rate):
+    def __getitem__(self, idx):
         """Get the i^th sample, get's one sample of data.
         """
 
@@ -161,7 +162,7 @@ class MNIST_rand(object):
 
         # DEFINE RANDOM RANGE, here 30% of about 3000 edges
         
-        removal = random.randint(0, int(self.n_edges*removal_rate))
+        removal = random.randint(0, int(self.n_edges*self.removal))
 
         #graph = random_edge_suppression_nx(self.graph, removal) #-> BETTER PERF
         graph = random_edge_suppression(self.size, removal)
