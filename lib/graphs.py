@@ -26,6 +26,11 @@ def regular_2D_lattice(size):
     g = nx.grid_2d_graph(size, size)
     return transform(g)
 
+
+def regular_2D_lattice_nx(size):
+    g = nx.grid_2d_graph(size, size)
+    return transform(g)
+
 # 2D regular lattice, connected to 8 neighbors
 
 
@@ -45,21 +50,24 @@ def regular_2D_lattice_8_neighbors(size):
 
 # --------- Irregular tilings --------- #
 
-def subgraph(g, parameter):
-
-    return g
-
-
 def random_edge_suppression(size, k):
     '''
     Takes a DGLGraph and K a number of edges to remove
     '''
-    G = dgl.DGLGraph()
     g = nx.grid_2d_graph(size, size)
     to_remove = random.sample(g.edges(), k)
     g.remove_edges_from(to_remove)
-    G.from_networkx(g)
-    return G
+    return transform(g)
+
+
+def random_edge_suppression_nx(graph, k):
+    '''
+    Takes a DGLGraph and K a number of edges to remove
+    '''
+    to_remove = random.sample(graph.edges(), k)
+    graph.remove_edges_from(to_remove)
+    return transform(graph)
+
 
 def random_geometric_graph(size, p=0.058):
     '''
