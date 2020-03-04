@@ -3,6 +3,7 @@ import networkx as nx
 import os
 import torch
 import random
+import copy
 
 from graphs import regular_2D_lattice, regular_2D_lattice_8_neighbors, random_edge_suppression, random_edge_suppression_nx, regular_2D_lattice_nx
 
@@ -160,14 +161,14 @@ class MNIST_rand(object):
             idx = idx.tolist()
             print('ERROR IN DATALOADER /!\ ')
 
-        # DEFINE RANDOM RANGE, here 30% of about 3000 edges
         removal = random.randint(0, int(
             self.n_edges*self.removal_rate)) if self.rand else int(self.n_edges*self.removal_rate)
 
-        # graph = random_edge_suppression_nx(self.graph, removal) #-> BETTER PERF
-        graph = random_edge_suppression(self.size, removal)
+        G = random_edge_suppression_nx(self.graph.copy(), removal) # -> BETTER PERF
+        
+        #graph = random_edge_suppression(self.size, removal)
 
-        return graph, self.labels[idx], self.data[idx]
+        return G, self.labels[idx], self.data[idx]
 
     @property
     def num_classes(self):

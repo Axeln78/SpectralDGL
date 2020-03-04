@@ -7,6 +7,7 @@ This file is a regroupment of functions that are supposed to create different la
 import dgl
 import networkx as nx
 import random
+import copy
 
 
 def transform(g):
@@ -29,7 +30,7 @@ def regular_2D_lattice(size):
 
 def regular_2D_lattice_nx(size):
     g = nx.grid_2d_graph(size, size)
-    return transform(g)
+    return g
 
 # 2D regular lattice, connected to 8 neighbors
 
@@ -60,13 +61,15 @@ def random_edge_suppression(size, k):
     return transform(g)
 
 
-def random_edge_suppression_nx(graph, k):
+def random_edge_suppression_nx(G, k):
     '''
-    Takes a DGLGraph and K a number of edges to remove
+    Takes a NX and K a number of edges to remove
     '''
-    to_remove = random.sample(graph.edges(), k)
-    graph.remove_edges_from(to_remove)
-    return transform(graph)
+    
+    to_remove = random.sample(G.edges(), k)
+    G.remove_edges_from(to_remove)
+    
+    return transform(G)
 
 
 def random_geometric_graph(size, p=0.058):
