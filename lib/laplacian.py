@@ -10,7 +10,7 @@ All laplacian operations
 '''
 
 
-def normalized_laplacian(g):
+def normalized_laplacian(g, decomp = True):
     '''
     Function that computes the normalized laplacian (sparse) and the largest eigonvalues of a graph g 
 
@@ -41,10 +41,13 @@ def normalized_laplacian(g):
         norm = sparse.diags(dgl.backend.asnumpy(
             g_i.in_degrees()).clip(1) ** -0.5, dtype=float)
         laplacian = sparse.eye(n) - norm * adj * norm
-        lambda_max = sparse.linalg.eigs(laplacian, 1, which='LM',
-                                        return_eigenvectors=False)[0].real
-        rst.append(lambda_max)
-        laplacian = rescale_L(laplacian, lambda_max)
+        if decomp :
+            lambda_max = sparse.linalg.eigs(laplacian, 1, which='LM',
+                                            return_eigenvectors=False)[0].real
+            rst.append(lambda_max)
+            laplacian = rescale_L(laplacian, lambda_max)
+        else:
+            laplacian = rescale_L(laplacian) 
         L.append(laplacian)
 
     L_out = sparse.block_diag(L)
