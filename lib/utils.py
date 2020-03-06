@@ -8,15 +8,15 @@ import numpy as np
 
 
 def save_model(name, model):
-    if not os.path.exists('saved_models'):
-        os.makedirs('saved_models')
-    torch.save(model.state_dict(), './saved_models/' + name + '.pt')
+    if not os.path.exists('../resources/models/'):
+        os.makedirs('../resources/models/')
+    torch.save(model.state_dict(), '../resources/models/' + name + '.pt')
 
 
 def load_model(name):
-    assert os.path.exists('saved_models'), "Directory not found!"
+    assert os.path.exists('../resources/models/'), "Directory not found!"
     return torch.load(
-        "./saved_models/" + name + ".pt",
+        "../resources/models/" + name + ".pt",
         map_location=set_device())
 
 
