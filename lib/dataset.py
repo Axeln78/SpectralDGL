@@ -1,9 +1,10 @@
-import dgl
-import networkx as nx
 import os
-import torch
 import random
 import copy
+import dgl
+import networkx as nx
+import torch
+
 
 from graphs import regular_2D_lattice, regular_2D_lattice_8_neighbors, random_edge_suppression, random_edge_suppression_nx, regular_2D_lattice_nx
 
@@ -24,7 +25,13 @@ class MNISTDataset(object):
         number of pixel on one dimention of the original image
     """
 
-    def __init__(self, data, labels, lattice_type=0, lattice_size=28, nb_removal=28):
+    def __init__(
+            self,
+            data,
+            labels,
+            lattice_type=0,
+            lattice_size=28,
+            nb_removal=28):
         super(MNISTDataset, self).__init__()
         self.data = data
         self.labels = labels
@@ -57,7 +64,7 @@ class MNISTDataset(object):
         """
         if torch.is_tensor(idx):
             idx = idx.tolist()
-            print('ERROR IN DATALOADER /!\ ')
+            print(r'ERROR IN DATALOADER /!\ ')
 
         return self.graph, self.labels[idx], self.data[idx]
 
@@ -80,12 +87,18 @@ def check_mnist_dataset_exists(path_data='./'):
         print('MNIST dataset missing - downloading...')
         import torchvision
         import torchvision.transforms as transforms
-        trainset = torchvision.datasets.MNIST(root=path_data + 'mnist/temp', train=True,
-                                              download=True, transform=transforms.ToTensor())
-        testset = torchvision.datasets.MNIST(root=path_data + 'mnist/temp', train=False,
-                                             download=True, transform=transforms.ToTensor())
+        trainset = torchvision.datasets.MNIST(
+            root=path_data + 'mnist/temp',
+            train=True,
+            download=True,
+            transform=transforms.ToTensor())
+        testset = torchvision.datasets.MNIST(
+            root=path_data + 'mnist/temp',
+            train=False,
+            download=True,
+            transform=transforms.ToTensor())
         train_data = torch.Tensor(60000, 28, 28)
-        train_label = torch.LongTensor(60000)
+        train_label = torch.Tensor(60000)
 
         for idx, example in enumerate(trainset):
             train_data[idx] = example[0].squeeze()
@@ -94,7 +107,7 @@ def check_mnist_dataset_exists(path_data='./'):
         torch.save(train_data, path_data + 'mnist/train_data.pt')
         torch.save(train_label, path_data + 'mnist/train_label.pt')
         test_data = torch.Tensor(10000, 28, 28)
-        test_label = torch.LongTensor(10000)
+        test_label = torch.Tensor(10000)
 
         for idx, example in enumerate(testset):
             test_data[idx] = example[0].squeeze()
@@ -141,7 +154,14 @@ class MNIST_rand(object):
         number of pixel on one dimention of the original image
     """
 
-    def __init__(self, data, labels, lattice_type=0, lattice_size=28, removal_rate=0.1, rand=True):
+    def __init__(
+            self,
+            data,
+            labels,
+            lattice_type=0,
+            lattice_size=28,
+            removal_rate=0.1,
+            rand=True):
         super(MNIST_rand, self).__init__()
         self.data = data
         self.labels = labels
@@ -159,16 +179,22 @@ class MNIST_rand(object):
 
         if torch.is_tensor(idx):
             idx = idx.tolist()
-            print('ERROR IN DATALOADER /!\ ')
+            print(r'ERROR IN DATALOADER /!\ ')
 
-        removal = random.randint(0, int(
-            self.n_edges*self.removal_rate)) if self.rand else int(self.n_edges*self.removal_rate)
+        removal = random.randint(
+            0,
+            int(
+                self.n_edges *
+                self.removal_rate)) if self.rand else int(
+            self.n_edges *
+            self.removal_rate)
 
-        G = random_edge_suppression_nx(self.graph.copy(), removal) # -> BETTER PERF
-        
+        g = random_edge_suppression_nx(
+            self.graph.copy(), removal)  # -> BETTER PERF
+
         #graph = random_edge_suppression(self.size, removal)
 
-        return G, self.labels[idx], self.data[idx]
+        return g, self.labels[idx], self.data[idx]
 
     @property
     def num_classes(self):

@@ -1,7 +1,7 @@
 import dgl
 from dgl.batched_graph import BatchedDGLGraph, unbatch
 
-import torch.sparse
+#import torch.sparse
 from scipy import sparse
 
 from utils import npsparse_to_torch
@@ -10,9 +10,9 @@ All laplacian operations
 '''
 
 
-def normalized_laplacian(g, decomp = True):
+def normalized_laplacian(g, decomp=True):
     '''
-    Function that computes the normalized laplacian (sparse) and the largest eigonvalues of a graph g 
+    Function that computes the normalized laplacian (sparse) and the largest eigonvalues of a graph g
 
     Parameters
     ----------
@@ -41,13 +41,13 @@ def normalized_laplacian(g, decomp = True):
         norm = sparse.diags(dgl.backend.asnumpy(
             g_i.in_degrees()).clip(1) ** -0.5, dtype=float)
         laplacian = sparse.eye(n) - norm * adj * norm
-        if decomp :
+        if decomp:
             lambda_max = sparse.linalg.eigs(laplacian, 1, which='LM',
                                             return_eigenvectors=False)[0].real
             rst.append(lambda_max)
             laplacian = rescale_L(laplacian, lambda_max)
         else:
-            laplacian = rescale_L(laplacian) 
+            laplacian = rescale_L(laplacian)
         L.append(laplacian)
 
     L_out = sparse.block_diag(L)
@@ -58,7 +58,7 @@ def normalized_laplacian(g, decomp = True):
 
 def rescale_L(L, lmax=2):
     """
-    Rescale the Laplacian eigenvalues in [-1,1]. 
+    Rescale the Laplacian eigenvalues in [-1,1].
     here implemented for torch
     """
     M, M = L.shape
