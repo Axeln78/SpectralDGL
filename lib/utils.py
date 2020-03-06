@@ -6,19 +6,24 @@ import dgl
 import torch.sparse
 import numpy as np
 
+
 def save_model(name, model):
     if not os.path.exists('saved_models'):
         os.makedirs('saved_models')
     torch.save(model.state_dict(), './saved_models/' + name + '.pt')
-    
+
+
 def load_model(name):
     assert os.path.exists('saved_models'), "Directory not found!"
-    return torch.load("./saved_models/" + name + ".pt", map_location = set_device())
+    return torch.load(
+        "./saved_models/" + name + ".pt",
+        map_location=set_device())
+
 
 def collate(samples):
     '''
     Function that helps with the overall collation of graph, signals and labels
-    
+
     Return
     ----------
     Batched graph, labels (torch.tensor), signals (torch.tensor)
@@ -27,7 +32,8 @@ def collate(samples):
     #  (graph, label, signal).
     graphs, labels, signals = map(list, zip(*samples))
     batched_graph = dgl.batch(graphs)
-    return batched_graph, torch.tensor(labels),  torch.stack(signals).view(-1)
+    return batched_graph, torch.tensor(labels), torch.stack(signals).view(-1)
+
 
 def chebyshev(L, X, K):
     """

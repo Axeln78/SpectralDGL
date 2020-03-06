@@ -1,4 +1,4 @@
-''' 
+'''
 This file is a regroupment of functions that are supposed to create different lattices to test some hypothesis of laplacian proprieties
 
 '''
@@ -38,13 +38,13 @@ def regular_2D_lattice_nx(size):
 def regular_2D_lattice_8_neighbors(size):
     G = nx.grid_2d_graph(size, size)
     G.add_edges_from([
-        ((x, y), (x+1, y+1))
-        for x in range(size-1)
-        for y in range(size-1)
+        ((x, y), (x + 1, y + 1))
+        for x in range(size - 1)
+        for y in range(size - 1)
     ] + [
-        ((x+1, y), (x, y+1))
-        for x in range(size-1)
-        for y in range(size-1)
+        ((x + 1, y), (x, y + 1))
+        for x in range(size - 1)
+        for y in range(size - 1)
     ], weight=1)
     return transform(G)
 
@@ -65,10 +65,10 @@ def random_edge_suppression_nx(G, k):
     '''
     Takes a NX and K a number of edges to remove
     '''
-    
+
     to_remove = random.sample(G.edges(), k)
     G.remove_edges_from(to_remove)
-    
+
     return transform(G)
 
 
@@ -77,7 +77,7 @@ def random_geometric_graph(size, p=0.058):
     size: sqrt of number of nodes
     p: max distance between two nodes to be connected
     '''
-    g = nx.random_geometric_graph(size*size, p)
+    g = nx.random_geometric_graph(size * size, p)
 
     return transform(g)
 
@@ -87,7 +87,7 @@ def random_waxman_graph(size):
     size: sqrt of number of nodes
     p: max distance between two nodes to be connected
     '''
-    g = nx.waxman_graph(size*size, alpha=1, beta=0.015)
+    g = nx.waxman_graph(size * size, alpha=1, beta=0.015)
 
     return transform(g)
 
@@ -97,7 +97,7 @@ def contracted(g, contraction_list):
 
     Parameters:
     -----------
-    G : graph of type DGLGraph 
+    G : graph of type DGLGraph
 
     contraction_list : list of node to contract. A list element (1,2) will merge node 1 and 2.
     '''
