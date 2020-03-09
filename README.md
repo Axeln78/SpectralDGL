@@ -12,6 +12,19 @@ lib/
 └── utils.py
 ```
 
+## Resources
+
+Shared resources between different part of the project
+
+- imgs folder are for exporting figures that can be included in the final report 
+
+- models regroup several trained ChebNets that are all supposedly achieving 98% accuracy over their testing set
+
+```bash
+├── imgs
+├── models
+```
+
 ## Chebnet on MNIST
 Notebook implementation of the Chebyconv using the DGL framework. 
 The net is a simple LeNet 5 with three convolution layer and two linear layers.
@@ -30,5 +43,10 @@ The dataset is the good-old MNIST
 
 ## Stochastic learning
 
-Notebook for stochastic learning
+Notebook for stochastic learning. For now only two notebooks to train and test the model are implemented.
+
+```bash
+├── Training
+├── Testing
+```
 

@@ -9,3 +9,6 @@ This private repository regroups the efforts to be able to study the transferabi
 ## Support Notebooks
 Notebooks made to visualise, measure of develop different scripts.
 
+- Training 
+
+- Testing
