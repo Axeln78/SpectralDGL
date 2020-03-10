@@ -23,9 +23,9 @@ def transform(g):
 # 2D regular lattice, connected to 4 neighbors
 
 
-def regular_2D_lattice(size):
+def regular_2D_lattice(size, to_dgl=False):
     g = nx.grid_2d_graph(size, size)
-    return transform(g)
+    return g if to_dgl else transform(g)
 
 
 def regular_2D_lattice_nx(size):
@@ -35,7 +35,7 @@ def regular_2D_lattice_nx(size):
 # 2D regular lattice, connected to 8 neighbors
 
 
-def regular_2D_lattice_8_neighbors(size):
+def regular_2D_lattice_8_neighbors(size, to_dgl=False):
     G = nx.grid_2d_graph(size, size)
     G.add_edges_from([
         ((x, y), (x + 1, y + 1))
@@ -46,7 +46,7 @@ def regular_2D_lattice_8_neighbors(size):
         for x in range(size - 1)
         for y in range(size - 1)
     ], weight=1)
-    return transform(G)
+    return G if to_dgl else transform(G)
 
 
 # --------- Irregular tilings --------- #
