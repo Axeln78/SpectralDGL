@@ -21,7 +21,7 @@ precision    recall  f1-score   support
 weighted avg     0.9845    0.9844    0.9844      1024
 ```
 ## Model_sto
--> false
+Trained by removing randomly up to 25% of the edges of the 4-neighbors lattice
 ```bash
 precision    recall  f1-score   support
 
