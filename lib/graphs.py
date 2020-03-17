@@ -72,6 +72,17 @@ def random_edge_suppression_nx(G, k):
     return transform(G)
 
 
+def random_node_suppression(g, k):
+    '''
+    Takes a DGLGraph and K a number of edges to remove
+    '''
+    l = [random.randint(0,len(g)) for i in range(k)]
+    g.remove_nodes(l)
+    #TBR
+    g.add_nodes(k)
+    return g, l
+
+    
 def random_geometric_graph(size, p=0.058):
     '''
     size: sqrt of number of nodes
