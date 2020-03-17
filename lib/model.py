@@ -174,6 +174,11 @@ class SanityCheck(nn.Module):
         x = self.fc3(x)
         return x
     
+'''
+    ------------------------------------------------------------------------------
+'''
+import matplotlib.pyplot as plt
+
 
 class DGL_stock_Classifier(nn.Module):
     
@@ -202,7 +207,7 @@ class DGL_stock_Classifier(nn.Module):
             nn.Linear(n_classifier, n_classes)
         )
 
-    def forward(self, g, signal):
+    def forward(self, g, signal, lambda_max = None):
         '''
         Parameters:
         -----------
@@ -214,7 +219,7 @@ class DGL_stock_Classifier(nn.Module):
         batch_size = g.batch_size if isinstance(g, BatchedDGLGraph) else 1
         h = signal.view(-1, 1)  # [B*V*h,1] = [V2*h,1]
         for conv in self.layers:
-            h = conv(g, h)
+            h = conv(g, h, lambda_max)
         return self.classify(h.view(batch_size, -1))  # {B, V*F}
     
         
@@ -269,16 +274,19 @@ class DGL_ChebConv(nn.Module):
             self.bias = nn.Parameter(torch.Tensor(out_feats))
         else:
             self.register_buffer('bias', None)
+        self.reset_parameters()
 
+    def reset_parameters(self):
+        """Reinitialize learnable parameters."""
+        if self.bias is not None:
+            init.zeros_(self.bias)
+        for module in self.fc.modules():
+            if isinstance(module, nn.Linear):
+                init.xavier_normal_(module.weight, init.calculate_gain('relu'))
+                if module.bias is not None:
+                    init.zeros_(module.bias)
 
     def forward(self, graph, feat, lambda_max=None):
-        '''
-        
-        ATTEMPT TO CORRECT THIS IMPLEMENTATION
-        
-        '''
-        
-        
         r"""Compute ChebNet layer.
 
         Parameters
@@ -303,13 +311,13 @@ class DGL_ChebConv(nn.Module):
         """
         with graph.local_scope():
             norm = torch.pow(
-                graph.in_degrees().float().clamp(min=1), -0.5).to(feat.device)
+                graph.in_degrees().float().clamp(min=1), -0.5).unsqueeze(-1).to(feat.device)
             if lambda_max is None:
                 lambda_max = laplacian_lambda_max(graph)
             if isinstance(lambda_max, list):
                 lambda_max = torch.Tensor(lambda_max).to(feat.device)
             if lambda_max.dim() == 1:
-                lambda_max = lambda_max  # (B,) to (B, 1)
+                lambda_max = lambda_max.unsqueeze(-1)  # (B,) to (B, 1)
             # broadcast from (B, 1) to (N, 1)
             lambda_max = broadcast_nodes(graph, lambda_max)
             # T0(X)
@@ -336,6 +344,7 @@ class DGL_ChebConv(nn.Module):
                 Tx_2 = -4. * h / lambda_max + Tx_1 * (4. / lambda_max - 2) - Tx_0
                 rst = rst + self.fc[i](Tx_2)
                 Tx_1, Tx_0 = Tx_2, Tx_1
+                plt.imshow(Tx_1.view(-1,28).detach().numpy())
             # add bias
             if self.bias is not None:
                 rst = rst + self.bias
@@ -359,17 +368,17 @@ class DGL_modded_Classifier(nn.Module):
         '''
 
         self.layers = nn.ModuleList([
-        DGL_ChebConv(in_dim, fc1, k),
-        DGL_ChebConv(fc1, fc2, k)])
+        DGL_ChebConv(in_dim, fc1, k)])#,
+        #DGL_ChebConv(fc1, fc2, k)])
 
         self.classify = nn.Sequential(
-            nn.Linear(fc2*784, n_classifier),
+            nn.Linear(fc1*784, n_classifier),
             nn.ReLU(inplace=True),
             nn.Dropout(), 
             nn.Linear(n_classifier, n_classes)
         )
 
-    def forward(self, g, signal):
+    def forward(self, g, signal, lambda_max=None):
         '''
         Parameters:
         -----------
@@ -381,6 +390,6 @@ class DGL_modded_Classifier(nn.Module):
         batch_size = g.batch_size if isinstance(g, BatchedDGLGraph) else 1
         h = signal.view(-1, 1)  # [B*V*h,1] = [V2*h,1]
         for conv in self.layers:
-            h = conv(g, h)
+            h = conv(g, h, lambda_max)
         return self.classify(h.view(batch_size, -1))  # {B, V*F}
     
