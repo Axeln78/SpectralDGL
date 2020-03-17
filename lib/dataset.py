@@ -78,7 +78,7 @@ class MNISTDataset(object):
         return len(self.labels)
 
 
-def check_mnist_dataset_exists(path_data='./'):
+def check_mnist_dataset_exists(path_data='../Datasets/'):
     flag_train_data = os.path.isfile(path_data + 'mnist/train_data.pt')
     flag_train_label = os.path.isfile(path_data + 'mnist/train_label.pt')
     flag_test_data = os.path.isfile(path_data + 'mnist/test_data.pt')
@@ -120,19 +120,19 @@ def check_mnist_dataset_exists(path_data='./'):
 
 def datasampler(nb_selected_train_data, nb_selected_test_data):
 
-    train_data = torch.load('mnist/train_data.pt').reshape(60000, 784)
+    train_data = torch.load('../Datasets/mnist/train_data.pt').reshape(60000, 784)
     train_data = train_data[:nb_selected_train_data, :]
     #print(train_data.shape, type(train_data))
 
-    train_labels = torch.load('mnist/train_label.pt')
+    train_labels = torch.load('../Datasets/mnist/train_label.pt')
     train_labels = train_labels[:nb_selected_train_data]
     # print(train_labels.shape)
 
-    test_data = torch.load('mnist/test_data.pt').reshape(10000, 784)
+    test_data = torch.load('../Datasets/mnist/test_data.pt').reshape(10000, 784)
     test_data = test_data[:nb_selected_test_data, :]
     # print(test_data.shape)
 
-    test_labels = torch.load('mnist/test_label.pt')
+    test_labels = torch.load('../Datasets/mnist/test_label.pt')
     test_labels = test_labels[:nb_selected_test_data]
     # print(test_labels.shape)
     return train_data, train_labels, test_data, test_labels
