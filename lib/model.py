@@ -1,3 +1,7 @@
+from torch import nn
+from dgl import laplacian_lambda_max, broadcast_nodes, function as fn
+from torch.nn import init
+import matplotlib.pyplot as plt
 import dgl.function as fn
 import torch
 import torch.nn as nn
@@ -98,7 +102,7 @@ class Classifier(nn.Module):
         self.classify = nn.Sequential(
             nn.Linear(fc2*784, n_classifier),
             nn.ReLU(inplace=True),
-            nn.Dropout(), 
+            nn.Dropout(),
             nn.Linear(n_classifier, n_classes)
         )
 
@@ -140,7 +144,7 @@ class SmallCheb(nn.Module):
         self.classify = nn.Sequential(
             nn.Linear(fc1*784, n_classifier),
             nn.ReLU(inplace=True),
-            nn.Dropout(),  
+            nn.Dropout(),
             nn.Linear(n_classifier, n_classes)
         )
 
@@ -173,15 +177,15 @@ class SanityCheck(nn.Module):
         x = F.relu(self.fc2(x))
         x = self.fc3(x)
         return x
-    
+
+
 '''
     ------------------------------------------------------------------------------
 '''
-import matplotlib.pyplot as plt
 
 
 class DGL_stock_Classifier(nn.Module):
-    
+
     def __init__(self, in_dim, fc1, fc2, n_classifier, n_classes, k):
         super(DGL_stock_Classifier, self).__init__()
         '''
@@ -197,17 +201,17 @@ class DGL_stock_Classifier(nn.Module):
         '''
 
         self.layers = nn.ModuleList([
-        dgl.nn.pytorch.conv.ChebConv(in_dim, fc1, k),
-        dgl.nn.pytorch.conv.ChebConv(fc1, fc2, k)])
+            dgl.nn.pytorch.conv.ChebConv(in_dim, fc1, k),
+            dgl.nn.pytorch.conv.ChebConv(fc1, fc2, k)])
 
         self.classify = nn.Sequential(
             nn.Linear(fc2*784, n_classifier),
             nn.ReLU(inplace=True),
-            nn.Dropout(), 
+            nn.Dropout(),
             nn.Linear(n_classifier, n_classes)
         )
 
-    def forward(self, g, signal, lambda_max = None):
+    def forward(self, g, signal, lambda_max=None):
         '''
         Parameters:
         -----------
@@ -221,14 +225,67 @@ class DGL_stock_Classifier(nn.Module):
         for conv in self.layers:
             h = conv(g, h, lambda_max)
         return self.classify(h.view(batch_size, -1))  # {B, V*F}
-    
-        
+
+
+class DGL_mean_Classifier(nn.Module):
+
+    def __init__(self, in_dim, fc1, fc2, n_classifier, n_classes, k, readout="sum"):
+        super(DGL_mean_Classifier, self).__init__()
+        '''
+        Parameters:
+        -----------
+        in_dim: Number of input features
+        fc1: number of output from the first convolutional layer
+        fc2: number of outputs from the second conv layer
+        n_classifier number of hidden layers in the classifier module
+        n_classes: number of classes for the classifier
+        k: number of Chebynomes to compute
+
+        '''
+
+        self.layers = nn.ModuleList([
+            dgl.nn.pytorch.conv.ChebConv(in_dim, fc1, k),
+            dgl.nn.pytorch.conv.ChebConv(fc1, fc2, k)])
+
+        self.MLP = nn.Sequential(
+            nn.Linear(fc2, n_classifier),
+            nn.ReLU(inplace=True),
+            nn.Dropout(),
+            nn.Linear(n_classifier, n_classes)
+        )
+        self.readout = readout
+
+    def forward(self, g, signal, lambda_max=None):
+        '''
+        Parameters:
+        -----------
+        g: graph
+        signal : signal over graph
+        L : Laplacian matrix
+        '''
+
+        batch_size = g.batch_size if isinstance(g, BatchedDGLGraph) else 1
+        h = signal.view(-1, 1)  # [B*V*h,1] = [V2*h,1]
+
+        for conv in self.layers:
+            h = conv(g, h, lambda_max)
+        g.ndata['h'] = h
+
+        if self.readout == "sum":
+            hg = dgl.sum_nodes(g, 'h')
+        elif self.readout == "max":
+            hg = dgl.max_nodes(g, 'h')
+        elif self.readout == "mean":
+            hg = dgl.mean_nodes(g, 'h')
+        else:
+            hg = dgl.mean_nodes(g, 'h')  # default readout is mean nodes
+
+        return self.MLP(hg)  # {B, F}
+
     '''
     ------------------------------------------------------------------------------
     '''
-from torch import nn
-from torch.nn import init
-from dgl import laplacian_lambda_max, broadcast_nodes, function as fn
+
 
 class DGL_ChebConv(nn.Module):
     r"""Chebyshev Spectral Graph Convolution layer from paper `Convolutional
@@ -341,18 +398,19 @@ class DGL_ChebConv(nn.Module):
                 #      = - 4(D ^ -1/2 A D ^ -1/2) / lambda_max Tx_(k-1) +
                 #        (4 / lambda_max - 2) Tx_(k-1) -
                 #        Tx_(k-2)
-                Tx_2 = -4. * h / lambda_max + Tx_1 * (4. / lambda_max - 2) - Tx_0
+                Tx_2 = -4. * h / lambda_max + Tx_1 * \
+                    (4. / lambda_max - 2) - Tx_0
                 rst = rst + self.fc[i](Tx_2)
                 Tx_1, Tx_0 = Tx_2, Tx_1
-                plt.imshow(Tx_1.view(-1,28).detach().numpy())
+                plt.imshow(Tx_1.view(-1, 28).detach().numpy())
             # add bias
             if self.bias is not None:
                 rst = rst + self.bias
             return rst
-        
-        
+
+
 class DGL_modded_Classifier(nn.Module):
-    
+
     def __init__(self, in_dim, fc1, fc2, n_classifier, n_classes, k):
         super(DGL_modded_Classifier, self).__init__()
         '''
@@ -368,13 +426,13 @@ class DGL_modded_Classifier(nn.Module):
         '''
 
         self.layers = nn.ModuleList([
-        DGL_ChebConv(in_dim, fc1, k)])#,
-        #DGL_ChebConv(fc1, fc2, k)])
+            DGL_ChebConv(in_dim, fc1, k)])  # ,
+        # DGL_ChebConv(fc1, fc2, k)])
 
         self.classify = nn.Sequential(
             nn.Linear(fc1*784, n_classifier),
             nn.ReLU(inplace=True),
-            nn.Dropout(), 
+            nn.Dropout(),
             nn.Linear(n_classifier, n_classes)
         )
 
@@ -392,4 +450,3 @@ class DGL_modded_Classifier(nn.Module):
         for conv in self.layers:
             h = conv(g, h, lambda_max)
         return self.classify(h.view(batch_size, -1))  # {B, V*F}
-    
