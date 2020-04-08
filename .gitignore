@@ -65,4 +65,4 @@ scratch/
 # Project specific stuff ----
 ## Dataset 
 mnist/
-
+resources/imgs/
