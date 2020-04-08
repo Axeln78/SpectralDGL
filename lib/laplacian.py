@@ -53,7 +53,7 @@ def normalized_laplacian(g, decomp=True):
     L_out = sparse.block_diag(L)
     # rst is the vector with all highest eigvals
     # It can also be an output
-    return npsparse_to_torch(L_out)#, rst
+    return npsparse_to_torch(L_out)#rst #npsparse_to_torch(L_out)#, 
 
 
 def rescale_L(L, lmax=2):

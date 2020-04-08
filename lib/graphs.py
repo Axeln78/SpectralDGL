@@ -8,6 +8,9 @@ import dgl
 import networkx as nx
 import random
 import copy
+import dgl
+from dgl import BatchedDGLGraph, unbatch
+import torch
 
 
 def transform(g):
@@ -72,17 +75,50 @@ def random_edge_suppression_nx(G, k):
     return transform(G)
 
 
-def random_node_suppression(g, k):
+def transform_default(g, func, arg):
     '''
     Takes a DGLGraph and K a number of edges to remove
     '''
-    l = [random.randint(0,len(g)) for i in range(k)]
-    g.remove_nodes(l)
-    #TBR
-    g.add_nodes(k)
-    return g, l
+    if isinstance(g, BatchedDGLGraph):
+        g_arr = unbatch(g)
+    else:
+        g_arr = [g]
 
+    G = []
+    for g_i in g_arr:
+        g_i = func(g_i, arg)
+        G.append(g_i)
+    return dgl.batch(G)
+
+
+def random_node_suppression(g, k):
     
+    if isinstance(g, BatchedDGLGraph):
+        g_arr = unbatch(g)
+    else:
+        g_arr = [g]
+
+    G = []
+    for g_i in g_arr:
+        n_nodes = len(g_i)
+        l = [random.randint(0, n_nodes) for i in range(k)]
+        g_i.remove_nodes(l)
+        diff = n_nodes - len(g_i)
+        g_i.add_nodes(diff, {'h': torch.zeros(diff)})
+        G.append(g_i)
+    return dgl.batch(G)
+    
+    return g
+'''
+def random_node_suppression(g, k):
+    n_nodes = len(g)
+    l = [random.randint(0, n_nodes) for i in range(k)]
+    g.remove_nodes(l)
+    diff = n_nodes - len(g)
+    g.add_nodes(diff, {'h': torch.zeros(diff)})
+    return g
+'''
+
 def random_geometric_graph(size, p=0.058):
     '''
     size: sqrt of number of nodes
