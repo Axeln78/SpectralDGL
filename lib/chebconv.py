@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 import dgl
+import dgl.function as fn
 
 '''
 class NodeApplyModule(nn.Module):
@@ -38,7 +39,7 @@ class Cheb_Conv(nn.Module):
                  out_feats,
                  k,
                  bias=True):
-        super(ChebConv, self).__init__()
+        super(Cheb_Conv, self).__init__()
         self._k = k
         self._in_feats = in_feats
         self._out_feats = out_feats
@@ -48,28 +49,29 @@ class Cheb_Conv(nn.Module):
 
     def forward(self, graph, signal, lambda_max=None):
         
-        def lin_layer(nodes): return {'h': self.fc(node.data['h'])}
+        def lin_layer(nodes): return {'h': self.fc(nodes.data['h'])}
    
         Xt = torch.Tensor([]) #.to(self.device)
  
         with graph.local_scope():
             # Calc D
-            D_sqrt = th.pow(
+            D_sqrt = torch.pow(
                 graph.in_degrees().float().clamp(min=1), -0.5).unsqueeze(-1).to(signal.device)
              
             if lambda_max is None:
                 lambda_max = dgl.laplacian_lambda_max(graph) #try catch here?
             if isinstance(lambda_max, list):
-                lambda_max = th.Tensor(lambda_max).to(signal.device)
+                lambda_max = torch.Tensor(lambda_max).to(signal.device)
             if lambda_max.dim() == 1:
                 lambda_max = lambda_max.unsqueeze(-1)  # (B,) to (B, 1)
             
             # broadcast from (B, 1) to (N, 1)
-            lambda_max = broadcast_nodes(graph, lambda_max)
+            lambda_max = dgl.broadcast_nodes(graph, lambda_max)
         
             # X_0(f)
             X_0 = signal 
-            Xt.append(X_0)
+            Xt = X_0
+            
             
             def unnLaplacian(signal,D_sqrt,graph):
                 graph.ndata['h'] = signal * D_sqrt
@@ -87,7 +89,8 @@ class Cheb_Conv(nn.Module):
                 h = graph.ndata.pop('h') * D_sqrt
                 '''
                 X_1 = - re_norm * h + X_0 * (re_norm - 1) 
-                Xt.append(X_1)
+                Xt = torch.cat((Xt,X_1),1)
+                
                 
             # Xi(x), i = 2...k
             for i in range(2, self._k):
@@ -100,15 +103,16 @@ class Cheb_Conv(nn.Module):
                  '''
                 X_i = - 2 * re_norm * h  + X_1 * 2 * (re_norm - 1) - X_0
                 
-                Xt.append(X_i)
+                Xt = torch.cat((Xt,X_i),1)
+                
                 X_1, X_0 = X_i, X_1
             
             # forward pass
-            g.ndata['h'] = Xt.squeeze().t() 
+            graph.ndata['h'] = Xt #.squeeze().t() 
             
-            g.apply_nodes(func=lin_layer)
+            graph.apply_nodes(func=lin_layer)
             # or #g.ndata['h'] = self.linear(g.ndata['h'])
             
-            return g.ndata.pop('h')
+            return graph.ndata.pop('h')
         
         

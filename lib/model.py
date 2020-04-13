@@ -124,6 +124,7 @@ class Classifier(nn.Module):
         return self.classify(hg.view(batch_size, -1))  # {B, V*F}
 
 
+from chebconv import Cheb_Conv
 class SmallCheb(nn.Module):
 
     def __init__(self, in_dim, fc1, n_classifier, n_classes, k):
@@ -140,7 +141,7 @@ class SmallCheb(nn.Module):
         '''
 
         self.layers = nn.ModuleList([
-            Chebyconv(in_dim, fc1, k)])
+            Cheb_Conv(in_dim, fc1, k)])
 
         self.classify = nn.Sequential(
             nn.Linear(fc1*784, n_classifier),
@@ -291,10 +292,10 @@ class DGL_mean_Classifier(nn.Module):
     ------------------------------------------------------------------------------
     '''
     
-class DGL_global_pooling_Classifier(nn.Module):
+class DGL_mean_Classifier_modded(nn.Module):
 
     def __init__(self, in_dim, fc1, fc2, n_classifier, n_classes, k, readout="sum"):
-        super(DGL_global_pooling_Classifier, self).__init__()
+        super(DGL_mean_Classifier_modded, self).__init__()
         '''
         Parameters:
         -----------
@@ -309,17 +310,16 @@ class DGL_global_pooling_Classifier(nn.Module):
         self.readout = readout
         
         self.layers = nn.ModuleList([
-            dgl.nn.pytorch.conv.ChebConv(in_dim, fc1, k),
-            dgl.nn.pytorch.conv.ChebConv(fc1, fc2, k),
-            dgl.nn.pytorch.conv.ChebConv(fc2, fc2, k),
-            dgl.nn.pytorch.conv.ChebConv(fc2, fc2, k),
-            dgl.nn.pytorch.conv.ChebConv(fc2, fc2, k)])
-        
+            Cheb_Conv(in_dim, fc1, k),
+            Cheb_Conv(fc1, fc2, k),
+            Cheb_Conv(fc2, 2*fc2, k),
+            Cheb_Conv(2*fc2, 4*fc2, k)])
+            
         self.MLP = nn.Sequential(
-            nn.Linear(2*fc2, fc2),
-            nn.ReLU(inplace=True),
-            #nn.Dropout(p=0.3),
-            nn.Linear(fc2, n_classes)
+            #nn.Linear(4*fc2, 4*fc2),
+            #nn.ReLU(inplace=True),
+            #nn.Dropout(p=0.5),
+            nn.Linear(4*fc2, n_classes)
         )
 
     def forward(self, g, signal, lambda_max=None):
@@ -331,16 +331,19 @@ class DGL_global_pooling_Classifier(nn.Module):
         '''
 
         batch_size = g.batch_size if isinstance(g, BatchedDGLGraph) else 1
-        
-        h = signal 
-        
+        h = signal # [B*V*h,1] = [V2*h,1]
+ 
         for conv in self.layers:
             h = conv(g, h, lambda_max)
         g.ndata['h'] = h
-
-        hg_max = dgl.max_nodes(g, 'h')
-        hg_mean = dgl.mean_nodes(g, 'h')
-        hg = torch.cat([hg_max, hg_mean],1)
+        
+        if self.readout == "sum":
+            hg = dgl.sum_nodes(g, 'h')
+        elif self.readout == "max":
+            hg = dgl.max_nodes(g, 'h')
+        elif self.readout == "mean":
+            hg = dgl.mean_nodes(g, 'h')
+        else:
+            hg = dgl.mean_nodes(g, 'h') 
         
         return self.MLP(hg)  # [B x Fc2]
-    
