@@ -316,8 +316,8 @@ class DGL_mean_Classifier_modded(nn.Module):
             Cheb_Conv(2*fc2, 4*fc2, k)])
             
         self.MLP = nn.Sequential(
-            #nn.Linear(4*fc2, 4*fc2),
-            #nn.ReLU(inplace=True),
+            nn.Linear(4*fc2, 4*fc2),
+            nn.ReLU(inplace=True),
             #nn.Dropout(p=0.5),
             nn.Linear(4*fc2, n_classes)
         )
