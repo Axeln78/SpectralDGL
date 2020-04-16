@@ -22,11 +22,11 @@ class MoleculeDGL(torch.utils.data.Dataset):
         self.split = split
         self.num_graphs = num_graphs
         
-        with open(data_dir + "/%s.pickle" % self.split,"rb") as f:
+        with open(data_dir + "%s.pickle" % self.split,"rb") as f:
             self.data = pickle.load(f)
 
         # loading the sampled indices from file ./zinc_molecules/<split>.index
-        with open(data_dir + "/%s.index" % self.split,"r") as f:
+        with open(data_dir + "%s.index" % self.split,"r") as f:
             data_idx = [list(map(int, idx)) for idx in csv.reader(f)]
             self.data = [ self.data[i] for i in data_idx[0] ]
             
