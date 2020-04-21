@@ -1,5 +1,6 @@
 import dgl
-from dgl.batched_graph import BatchedDGLGraph, unbatch
+#from dgl.batched_graph import BatchedDGLGraph, unbatch
+from dgl import unbatch
 
 #import torch.sparse
 from scipy import sparse
@@ -28,10 +29,7 @@ def normalized_laplacian(g, decomp=True):
 
     '''
 
-    if isinstance(g, BatchedDGLGraph):
-        g_arr = unbatch(g)
-    else:
-        g_arr = [g]
+    g_arr = unbatch(g)
 
     rst = []
     L = []
@@ -53,7 +51,7 @@ def normalized_laplacian(g, decomp=True):
     L_out = sparse.block_diag(L)
     # rst is the vector with all highest eigvals
     # It can also be an output
-    return npsparse_to_torch(L_out)#rst #npsparse_to_torch(L_out)#, 
+    return npsparse_to_torch(L_out)  # rst #npsparse_to_torch(L_out)#,
 
 
 def rescale_L(L, lmax=2):
