@@ -7,7 +7,7 @@ from chebconv import Cheb_Conv
 
 class Cheb_ZINC(nn.Module):
 
-    def __init__(self, in_dim, num_atom_type, fc2, n_classifier, n_classes, k, readout="sum"):
+    def __init__(self, num_atom_type, fc2, n_classifier, n_classes, k, readout="sum"):
         super(Cheb_ZINC, self).__init__()
         '''
         Parameters:
@@ -23,7 +23,6 @@ class Cheb_ZINC(nn.Module):
         self.readout = readout
         
         self.layers = nn.ModuleList([
-            #Cheb_Conv(fc1, fc1, k),
             Cheb_Conv(fc2, fc2, k),
             Cheb_Conv(fc2, 2*fc2, k),
             Cheb_Conv(2*fc2, 4*fc2, k)])
@@ -31,13 +30,11 @@ class Cheb_ZINC(nn.Module):
         self.MLP = nn.Sequential(
             nn.Linear(4*fc2, 4*fc2),
             nn.ReLU(inplace=True),
-            nn.Dropout(p=0.5),
+            #nn.Dropout(p=0.5),
             nn.Linear(4*fc2, n_classes)
         )
         
-        #Benchmark Compliant
         self.embedding_h = nn.Embedding(num_atom_type, fc2)
-        #self.in_feat_dropout = nn.Dropout(in_feat_dropout)
 
     def forward(self, g, signal, lambda_max=None):
         '''
