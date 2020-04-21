@@ -14,7 +14,9 @@ import dgl.nn.pytorch.conv
 import dgl.nn
 
 from utils import chebyshev, set_device
-from dgl.batched_graph import BatchedDGLGraph
+#from dgl.batched_graph import BatchedDGLGraph
+
+from chebconv import Cheb_Conv
 
 '''
 CODE not used for the moment
@@ -28,7 +30,7 @@ def reduce(nodes):
     overwrite the original node feature."""
     accum = torch.sum(nodes.mailbox['m'], 1)
     return {'h': accum}
-    
+
 '''
 
 
@@ -63,7 +65,7 @@ class Chebyconv(nn.Module):
         self._k = k
         # Convlayer
         self.apply_mod = NodeApplyModule(
-            in_feats*k, out_feats, activation=F.relu)
+            in_feats * k, out_feats, activation=F.relu)
         self.device = set_device()
 
     def forward(self, g, feature, L):
@@ -100,7 +102,7 @@ class Classifier(nn.Module):
             Chebyconv(fc1, fc2, k)])
 
         self.classify = nn.Sequential(
-            nn.Linear(fc2, n_classifier), #*784
+            nn.Linear(fc2, n_classifier),  # *784
             nn.ReLU(inplace=True),
             nn.Dropout(),
             nn.Linear(n_classifier, n_classes)
@@ -115,7 +117,7 @@ class Classifier(nn.Module):
         L : Laplacian matrix
         '''
 
-        batch_size = g.batch_size if isinstance(g, BatchedDGLGraph) else 1
+        batch_size = g.batch_size  # if isinstance(g, BatchedDGLGraph) else 1
         h = signal.view(-1, 1)  # [B*V*h,1] = [V2*h,1]
         for conv in self.layers:
             h = conv(g, h, L)
@@ -124,7 +126,6 @@ class Classifier(nn.Module):
         return self.classify(hg.view(batch_size, -1))  # {B, V*F}
 
 
-from chebconv import Cheb_Conv
 class SmallCheb(nn.Module):
 
     def __init__(self, in_dim, fc1, n_classifier, n_classes, k):
@@ -144,7 +145,7 @@ class SmallCheb(nn.Module):
             Cheb_Conv(in_dim, fc1, k)])
 
         self.classify = nn.Sequential(
-            nn.Linear(fc1*784, n_classifier),
+            nn.Linear(fc1 * 784, n_classifier),
             nn.ReLU(inplace=True),
             nn.Dropout(),
             nn.Linear(n_classifier, n_classes)
@@ -207,7 +208,7 @@ class DGL_stock_Classifier(nn.Module):
             dgl.nn.pytorch.conv.ChebConv(fc1, fc2, k)])
 
         self.classify = nn.Sequential(
-            nn.Linear(fc2*784, n_classifier),
+            nn.Linear(fc2 * 784, n_classifier),
             nn.ReLU(inplace=True),
             nn.Dropout(),
             nn.Linear(n_classifier, n_classes)
@@ -231,7 +232,15 @@ class DGL_stock_Classifier(nn.Module):
 
 class DGL_mean_Classifier(nn.Module):
 
-    def __init__(self, in_dim, fc1, fc2, n_classifier, n_classes, k, readout="sum"):
+    def __init__(
+            self,
+            in_dim,
+            fc1,
+            fc2,
+            n_classifier,
+            n_classes,
+            k,
+            readout="sum"):
         super(DGL_mean_Classifier, self).__init__()
         '''
         Parameters:
@@ -245,18 +254,18 @@ class DGL_mean_Classifier(nn.Module):
 
         '''
         self.readout = readout
-        
+
         self.layers = nn.ModuleList([
             dgl.nn.pytorch.conv.ChebConv(in_dim, fc1, k),
             dgl.nn.pytorch.conv.ChebConv(fc1, fc2, k),
-            dgl.nn.pytorch.conv.ChebConv(fc2, 2*fc2, k),
-            dgl.nn.pytorch.conv.ChebConv(2*fc2, 4*fc2, k)])
-            
+            dgl.nn.pytorch.conv.ChebConv(fc2, 2 * fc2, k),
+            dgl.nn.pytorch.conv.ChebConv(2 * fc2, 4 * fc2, k)])
+
         self.MLP = nn.Sequential(
-            nn.Linear(4*fc2, 4*fc2),
+            nn.Linear(4 * fc2, 4 * fc2),
             nn.ReLU(inplace=True),
-            #nn.Dropout(p=0.5),
-            nn.Linear(4*fc2, n_classes)
+            # nn.Dropout(p=0.5),
+            nn.Linear(4 * fc2, n_classes)
         )
 
     def forward(self, g, signal, lambda_max=None):
@@ -264,16 +273,16 @@ class DGL_mean_Classifier(nn.Module):
         Parameters:
         -----------
         g: graph
-        signal : signal over graph 
+        signal : signal over graph
         '''
 
         batch_size = g.batch_size if isinstance(g, BatchedDGLGraph) else 1
-        h = signal #.view(-1, 1)  # [B*V*h,1] = [V2*h,1]
- 
+        h = signal  # .view(-1, 1)  # [B*V*h,1] = [V2*h,1]
+
         for conv in self.layers:
             h = conv(g, h, lambda_max)
         g.ndata['h'] = h
-        
+
         if self.readout == "sum":
             hg = dgl.sum_nodes(g, 'h')
         elif self.readout == "max":
@@ -281,20 +290,29 @@ class DGL_mean_Classifier(nn.Module):
         elif self.readout == "mean":
             hg = dgl.mean_nodes(g, 'h')
         else:
-            hg = dgl.mean_nodes(g, 'h') 
-        
+            hg = dgl.mean_nodes(g, 'h')
+
         # default readout is mean nodes
         #hg = torch.cat((dgl.max_nodes(g, 'h'),dgl.mean_nodes(g, 'h')),1)
-        
+
         return self.MLP(hg)  # [B x Fc2]
 
     '''
     ------------------------------------------------------------------------------
     '''
-    
+
+
 class DGL_mean_Classifier_modded(nn.Module):
 
-    def __init__(self, in_dim, fc1, fc2, n_classifier, n_classes, k, readout="sum"):
+    def __init__(
+            self,
+            in_dim,
+            fc1,
+            fc2,
+            n_classifier,
+            n_classes,
+            k,
+            readout="sum"):
         super(DGL_mean_Classifier_modded, self).__init__()
         '''
         Parameters:
@@ -308,18 +326,18 @@ class DGL_mean_Classifier_modded(nn.Module):
 
         '''
         self.readout = readout
-        
+
         self.layers = nn.ModuleList([
             Cheb_Conv(in_dim, fc1, k),
             Cheb_Conv(fc1, fc2, k),
-            Cheb_Conv(fc2, 2*fc2, k),
-            Cheb_Conv(2*fc2, 4*fc2, k)])
-            
+            Cheb_Conv(fc2, 2 * fc2, k),
+            Cheb_Conv(2 * fc2, 4 * fc2, k)])
+
         self.MLP = nn.Sequential(
-            nn.Linear(4*fc2, 4*fc2),
+            nn.Linear(4 * fc2, 4 * fc2),
             nn.ReLU(inplace=True),
-            #nn.Dropout(p=0.5),
-            nn.Linear(4*fc2, n_classes)
+            nn.Dropout(p=0.5),
+            nn.Linear(4 * fc2, n_classes)
         )
 
     def forward(self, g, signal, lambda_max=None):
@@ -327,16 +345,16 @@ class DGL_mean_Classifier_modded(nn.Module):
         Parameters:
         -----------
         g: graph
-        signal : signal over graph 
+        signal : signal over graph
         '''
 
-        batch_size = g.batch_size if isinstance(g, BatchedDGLGraph) else 1
-        h = signal # [B*V*h,1] = [V2*h,1]
- 
+        batch_size = g.batch_size  # if isinstance(g, BatchedDGLGraph) else 1
+        h = signal  # [B*V*h,1] = [V2*h,1]
+
         for conv in self.layers:
             h = conv(g, h, lambda_max)
         g.ndata['h'] = h
-        
+
         if self.readout == "sum":
             hg = dgl.sum_nodes(g, 'h')
         elif self.readout == "max":
@@ -344,6 +362,6 @@ class DGL_mean_Classifier_modded(nn.Module):
         elif self.readout == "mean":
             hg = dgl.mean_nodes(g, 'h')
         else:
-            hg = dgl.mean_nodes(g, 'h') 
-        
+            hg = dgl.mean_nodes(g, 'h')
+
         return self.MLP(hg)  # [B x Fc2]

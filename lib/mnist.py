@@ -122,10 +122,12 @@ def datasampler(nb_selected_train_data, nb_selected_test_data):
 
     train_data = torch.load(
         '../Datasets/mnist/train_data.pt').reshape(60000, 784)
-    train_data, val_data = train_data[:nb_selected_train_data, :], train_data[nb_selected_train_data:60000, :]
+    train_data, val_data = train_data[:nb_selected_train_data,
+                                      :], train_data[nb_selected_train_data:60000, :]
 
     train_labels = torch.load('../Datasets/mnist/train_label.pt')
-    train_labels, val_labels = train_labels[:nb_selected_train_data], train_labels[nb_selected_train_data:60000]
+    train_labels, val_labels = train_labels[:
+                                            nb_selected_train_data], train_labels[nb_selected_train_data:60000]
 
     test_data = torch.load(
         '../Datasets/mnist/test_data.pt').reshape(10000, 784)

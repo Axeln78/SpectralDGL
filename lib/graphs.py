@@ -9,7 +9,7 @@ import networkx as nx
 import random
 import copy
 import dgl
-from dgl import BatchedDGLGraph, unbatch
+#from dgl import BatchedDGLGraph, unbatch
 import torch
 
 
@@ -80,7 +80,7 @@ def transform_default(g, func, arg):
     Takes a DGLGraph and K a number of edges to remove
     '''
     if isinstance(g, BatchedDGLGraph):
-        g_arr = unbatch(g)
+        g_arr = dgl.unbatch(g)
     else:
         g_arr = [g]
 
@@ -92,9 +92,9 @@ def transform_default(g, func, arg):
 
 
 def random_node_suppression(g, k):
-    
+
     if isinstance(g, BatchedDGLGraph):
-        g_arr = unbatch(g)
+        g_arr = dgl.unbatch(g)
     else:
         g_arr = [g]
 
@@ -107,8 +107,10 @@ def random_node_suppression(g, k):
         g_i.add_nodes(diff, {'h': torch.zeros(diff)})
         G.append(g_i)
     return dgl.batch(G)
-    
+
     return g
+
+
 '''
 def random_node_suppression(g, k):
     n_nodes = len(g)
@@ -118,6 +120,7 @@ def random_node_suppression(g, k):
     g.add_nodes(diff, {'h': torch.zeros(diff)})
     return g
 '''
+
 
 def random_geometric_graph(size, p=0.058):
     '''

@@ -27,13 +27,14 @@ def collate(samples):
     Return
     ----------
     Batched graph, labels (torch.tensor), signals (torch.tensor)
-    
+
     '''
     # The input `samples` is a list of pairs
     #  (graph, label, signal).
     graphs, labels, signals = map(list, zip(*samples))
     batched_graph = dgl.batch(graphs)
     return batched_graph, torch.tensor(labels), torch.stack(signals).view(-1)
+
 
 def collate2(samples):
     '''
@@ -42,7 +43,7 @@ def collate2(samples):
     Return
     ----------
     Batched graph, labels (torch.tensor), signals (torch.tensor)
-    
+
     '''
     # The input `samples` is a list of pairs
     #  (graph, label, signal).
