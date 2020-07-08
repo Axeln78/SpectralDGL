@@ -1,5 +1,8 @@
 # Spectral DGL
 
+This repository was numerical basis of the masters thesis "On the Transferability of Spectral Graph Neural Networks".
+To find the final Master's thesis: https://infoscience.epfl.ch/record/278148?&ln=fr
+
 ## Lib
 Regroupment of functions used in all of the project
 ```bash
@@ -15,8 +18,6 @@ lib/
 ## Resources
 
 Shared resources between different part of the project
-
-- imgs folder are for exporting figures that can be included in the final report 
 
 - models regroup several trained ChebNets that are all supposedly achieving 98% accuracy over their testing set
 
